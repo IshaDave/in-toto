@@ -278,29 +278,95 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
       sorted(self.full_file_path_list))
 
 
+  def raiseException():
+    if os.name == "nt":
+      raise IOError("Is developer mode enabled?")
+  
   @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
   def test_record_symlinked_files(self):
-    """Symlinked files are always recorded. """
-    # Symlinked **files** are always recorded ...
-    link_pairs = [
-      ("foo", "foo_link"),
-      ("subdir/foosub1", "subdir/foosub2_link"),
-      ("subdir/subsubdir/foosubsub", "subdir/subsubdir/foosubsub_link")
-    ]
+    try:
+      """Symlinked files are always recorded. """
+      # Symlinked **files** are always recorded ...
+      link_pairs = [
+        ("foo", "foo_link"),
+        ("subdir/foosub1", "subdir/foosub2_link"),
+        ("subdir/subsubdir/foosubsub", "subdir/subsubdir/foosubsub_link")
+      ]
 
-    # Create links
-    for pair in link_pairs:
-      # We only use the basename of the file (source) as it is on the same
-      # level as the link (target)
-      os.symlink(os.path.basename(pair[0]), pair[1])
+      # Create links
+      for pair in link_pairs:
+        # We only use the basename of the file (source) as it is on the same
+        # level as the link (target)
+        os.symlink(os.path.basename(pair[0]), pair[1])
 
-    # Record files and linked files
-    # follow_symlink_dirs does not make a difference as it only concerns linked dirs
-    for follow_symlink_dirs in [True, False]:
-      artifacts_dict = record_artifacts_as_dict(["."],
-          follow_symlink_dirs=follow_symlink_dirs)
+      # Record files and linked files
+      # follow_symlink_dirs does not make a difference as it only concerns linked dirs
+      for follow_symlink_dirs in [True, False]:
+        artifacts_dict = record_artifacts_as_dict(["."],
+            follow_symlink_dirs=follow_symlink_dirs)
 
-      # Test that everything was recorded ...
+        # Test that everything was recorded ...
+        self.assertListEqual(sorted(list(artifacts_dict.keys())),
+            sorted(self.full_file_path_list + [pair[1] for pair in link_pairs]))
+
+        # ... and the hashes of each link/file pair match
+        for pair in link_pairs:
+          self.assertDictEqual(artifacts_dict[pair[0]], artifacts_dict[pair[1]])
+
+      for pair in link_pairs:
+        os.unlink(pair[1])
+    except IOError:
+      raiseException()
+
+  @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
+  def test_record_without_dead_symlinks(self):
+    """Dead symlinks are never recorded. """
+
+    # Dead symlinks are never recorded ...
+    try:
+      links = [
+        "foo_link",
+        "subdir/foosub2_link",
+        "subdir/subsubdir/foosubsub_link"
+      ]
+
+      # Create dead links
+      for link in links:
+        os.symlink("does/not/exist", link)
+
+      # Record files without dead links
+      # follow_symlink_dirs does not make a difference as it only concerns linked dirs
+      for follow_symlink_dirs in [True, False]:
+        artifacts_dict = record_artifacts_as_dict(["."],
+            follow_symlink_dirs=follow_symlink_dirs)
+
+        # Test only the files were recorded ...
+        self.assertListEqual(sorted(list(artifacts_dict.keys())),
+            sorted(self.full_file_path_list))
+
+      for link in links:
+        os.unlink(link)
+    except IOError:
+      raiseException()
+      
+
+  @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
+  def test_record_follow_symlinked_directories(self):
+    """Record files in symlinked dirs if follow_symlink_dirs is True. """
+
+    # Link to subdir
+    try:
+      os.symlink("subdir", "subdir_link")
+
+      link_pairs = [
+        ("subdir/foosub1", "subdir_link/foosub1"),
+        ("subdir/foosub2", "subdir_link/foosub2"),
+        ("subdir/subsubdir/foosubsub", "subdir_link/subsubdir/foosubsub"),
+      ]
+
+      # Record with follow_symlink_dirs TRUE
+      artifacts_dict = record_artifacts_as_dict(["."], follow_symlink_dirs=True)
+      # Test that all files were recorded including files in linked subdir ...
       self.assertListEqual(sorted(list(artifacts_dict.keys())),
           sorted(self.full_file_path_list + [pair[1] for pair in link_pairs]))
 
@@ -308,69 +374,15 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
       for pair in link_pairs:
         self.assertDictEqual(artifacts_dict[pair[0]], artifacts_dict[pair[1]])
 
-    for pair in link_pairs:
-      os.unlink(pair[1])
 
-
-  @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
-  def test_record_without_dead_symlinks(self):
-    """Dead symlinks are never recorded. """
-
-    # Dead symlinks are never recorded ...
-    links = [
-      "foo_link",
-      "subdir/foosub2_link",
-      "subdir/subsubdir/foosubsub_link"
-    ]
-
-    # Create dead links
-    for link in links:
-      os.symlink("does/not/exist", link)
-
-    # Record files without dead links
-    # follow_symlink_dirs does not make a difference as it only concerns linked dirs
-    for follow_symlink_dirs in [True, False]:
-      artifacts_dict = record_artifacts_as_dict(["."],
-          follow_symlink_dirs=follow_symlink_dirs)
-
-      # Test only the files were recorded ...
+      # Record with follow_symlink_dirs FALSE (default)
+      artifacts_dict = record_artifacts_as_dict(["."])
       self.assertListEqual(sorted(list(artifacts_dict.keys())),
           sorted(self.full_file_path_list))
 
-    for link in links:
-      os.unlink(link)
-
-
-  @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
-  def test_record_follow_symlinked_directories(self):
-    """Record files in symlinked dirs if follow_symlink_dirs is True. """
-
-    # Link to subdir
-    os.symlink("subdir", "subdir_link")
-
-    link_pairs = [
-      ("subdir/foosub1", "subdir_link/foosub1"),
-      ("subdir/foosub2", "subdir_link/foosub2"),
-      ("subdir/subsubdir/foosubsub", "subdir_link/subsubdir/foosubsub"),
-    ]
-
-    # Record with follow_symlink_dirs TRUE
-    artifacts_dict = record_artifacts_as_dict(["."], follow_symlink_dirs=True)
-    # Test that all files were recorded including files in linked subdir ...
-    self.assertListEqual(sorted(list(artifacts_dict.keys())),
-        sorted(self.full_file_path_list + [pair[1] for pair in link_pairs]))
-
-    # ... and the hashes of each link/file pair match
-    for pair in link_pairs:
-      self.assertDictEqual(artifacts_dict[pair[0]], artifacts_dict[pair[1]])
-
-
-    # Record with follow_symlink_dirs FALSE (default)
-    artifacts_dict = record_artifacts_as_dict(["."])
-    self.assertListEqual(sorted(list(artifacts_dict.keys())),
-        sorted(self.full_file_path_list))
-
-    os.unlink("subdir_link")
+      os.unlink("subdir_link")
+    except IOError:
+      raiseException()
 
 
   def test_record_files_and_subdirs(self):
