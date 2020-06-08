@@ -1,22 +1,18 @@
+
 #!/usr/bin/env python
 #coding=utf-8
 
 """
 <Program Name>
   test_runlib.py
-
 <Author>
   Lukas Puehringer <lukas.puehringer@nyu.edu>
-
 <Started>
   Dec 01, 2016
-
 <Copyright>
   See LICENSE for licensing information.
-
 <Purpose>
   Test runlib functions.
-
 """
 import os
 import unittest
@@ -281,7 +277,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
   def raiseException():
     if os.name == "nt":
       raise IOError("Is developer mode enabled?")
-  
+
   @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
   def test_record_symlinked_files(self):
     try:
@@ -316,7 +312,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
       for pair in link_pairs:
         os.unlink(pair[1])
     except IOError:
-      raiseException()
+      TestRecordArtifactsAsDict.raiseException()
 
   @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
   def test_record_without_dead_symlinks(self):
@@ -347,8 +343,8 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
       for link in links:
         os.unlink(link)
     except IOError:
-      raiseException()
-      
+      TestRecordArtifactsAsDict.raiseException()
+
 
   @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
   def test_record_follow_symlinked_directories(self):
@@ -382,7 +378,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 
       os.unlink("subdir_link")
     except IOError:
-      raiseException()
+      TestRecordArtifactsAsDict.raiseException()
 
 
   def test_record_files_and_subdirs(self):
@@ -439,13 +435,10 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 class TestInTotoRun(unittest.TestCase, TmpDirMixin):
   """"
   Tests runlib.in_toto_run() with different arguments
-
   Calls in_toto_run library funtion inside of a temporary directory that
   contains a test artifact and a test keypair
-
   If the function does not fail it will dump a test step link metadata file
   to the temp dir which is removed after every test.
-
   """
 
   @classmethod
