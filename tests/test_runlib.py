@@ -279,7 +279,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
       sorted(self.full_file_path_list))
 
 
-  def raiseException():
+  def raise_exception():
     if os.name == "nt":
       raise IOError("Is developer mode enabled?")
 
@@ -317,7 +317,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
       for pair in link_pairs:
         os.unlink(pair[1])
     except IOError:
-      TestRecordArtifactsAsDict.raiseException()
+      TestRecordArtifactsAsDict.raise_exception()
 
   @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
   def test_record_without_dead_symlinks(self):
@@ -348,7 +348,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
       for link in links:
         os.unlink(link)
     except IOError:
-      TestRecordArtifactsAsDict.raiseException()
+      TestRecordArtifactsAsDict.raise_exception()
 
 
   @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
@@ -383,7 +383,7 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 
       os.unlink("subdir_link")
     except IOError:
-      TestRecordArtifactsAsDict.raiseException()
+      TestRecordArtifactsAsDict.raise_exception()
 
 
   def test_record_files_and_subdirs(self):
