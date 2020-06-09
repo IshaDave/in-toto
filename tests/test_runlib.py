@@ -278,10 +278,10 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
       sorted(self.full_file_path_list))
 
 
-  def _raise_win_dev_mode_error():
+  def _raise_win_dev_mode_error(self):
     # If the platform is Windows, raises an error that asks the user if developer mode is activated.
     if os.name == "nt":
-      print("Developer mode is required to work with symlinks on Windows. Is it enabled?")
+      raise IOError("Developer mode is required to work with symlinks on Windows. Is it enabled?")
 
   @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
   def test_record_symlinked_files(self):
