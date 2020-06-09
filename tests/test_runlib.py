@@ -4,19 +4,19 @@
 """
 <Program Name>
   test_runlib.py
-  
+
 <Author>
   Lukas Puehringer <lukas.puehringer@nyu.edu>
-  
+
 <Started>
   Dec 01, 2016
-  
+
 <Copyright>
   See LICENSE for licensing information.
-  
+
 <Purpose>
   Test runlib functions.
-  
+
 """
 import os
 import unittest
@@ -285,8 +285,8 @@ class TestRecordArtifactsAsDict(unittest.TestCase, TmpDirMixin):
 
   @unittest.skipIf("symlink" not in os.__dict__, "symlink is not supported in this platform")
   def test_record_symlinked_files(self):
+    """Symlinked files are always recorded. """
     try:
-      """Symlinked files are always recorded. """
       # Symlinked **files** are always recorded ...
       link_pairs = [
         ("foo", "foo_link"),
